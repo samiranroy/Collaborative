@@ -1,0 +1,132 @@
+## This program
+## 1) Takes the movie lens dataset as input
+## 2) Creates user item matrix
+## 3) Using potter estimation (lambda1=50,lambda2=100) calculates the user and item bias
+## 4) Normalizes the matrix and stores it in an output file (baselinematrix.txt)
+
+import numpy
+
+f=open("u4.base","r")
+L=f.readlines()
+for i in range(len(L)):
+    L[i]=L[i].split("\t")
+    for j in range(3):
+            L[i][j]=int(L[i][j])
+f.close()
+
+itemdb={}
+db={}
+for i in L:
+    db[i[0]]={}
+    itemdb[i[1]]={}
+
+        
+for i in L:
+    db[i[0]][i[1]]=i[2]
+    itemdb[i[1]][i[0]]=i[2]
+
+
+Ratings_Dict={}
+for i in range(1,944):
+    Ratings_Dict[i]={}
+f=open("u4.base","r")
+Ratings=f.readlines()
+
+for i in range(len(Ratings)):
+    Ratings[i]=Ratings[i].split("\t")
+    for j in range(3):
+            Ratings[i][j]=int(Ratings[i][j])
+f.close()
+
+for i in Ratings:
+        Ratings_Dict[i[0]][i[1]]=i[2]
+
+base=numpy.zeros((943, 1682))
+
+
+
+        
+for i in range(1,943):
+    for j in range(1,1642):
+        try:
+            base[i][j]=Ratings_Dict[i][j]
+        except KeyError:
+            pass
+
+
+
+####################### end of input
+
+global_mean=0
+n=0
+
+for i in xrange(len(base)):
+            for j in xrange(len(base[i])):
+                if (base[i][j]>0):
+                    n=n+1
+                    global_mean=global_mean+base[i][j]
+
+global_mean=global_mean/n
+
+
+
+
+RonU={}
+for i in xrange(len(base)):
+    n=0
+    for j in xrange(len(base[i])):
+        if (base[i][j]>0):
+            n=n+1
+    RonU[i]=n
+
+
+RonI={}
+for i in range(1,1683):
+    RonI[i]=0
+
+
+for i in xrange(len(base)):
+    for j in xrange(len(base[i])):
+        if (base[i][j]>0):
+            RonI[j]=RonI[j]+1
+    
+
+Userbias={}
+Itembias={}
+
+#lambda1=50,lambda2=100
+
+
+user_bias={}
+item_bias={}
+for i in itemdb.keys():
+    total=0.0
+    for j in itemdb[i].keys():
+        total=total+itemdb[i][j]-global_mean
+    item_bias[i]=total/(len(itemdb[i].keys())+50)
+
+
+for i in db.keys():
+    total=0
+    for j in db[i].keys():
+        total=total+db[i][j]-(global_mean+item_bias[j])
+    user_bias[i]=total/(len(db[i].keys())+100)
+
+
+
+
+baseline=numpy.zeros((943, 1682))
+
+
+for i in range(1,943):
+    for j in range(1,1642):
+        try:
+            baseline[i][j]=global_mean+user_bias[i]+item_bias[j]
+        except KeyError:
+            pass
+        
+####################### baseline calculated
+
+numpy.save("baselinematrix.txt",baseline)
+
+

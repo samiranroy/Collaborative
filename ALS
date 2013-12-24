@@ -1,0 +1,28 @@
+## This is the Alternating Least Squares Algorithm for calculating the interaction matrix in Collaborative Filtering
+
+import numpy
+
+
+def ALS(R,iterations,k):
+    N = len(R)
+    M = len(R[0])
+    K = k
+    P=numpy.random.rand(N,K)
+
+
+# solving R=Px using least squares
+# R=xQ
+# R'=P'x'
+# solving R'=P'x' using least squares and x=x'
+
+    for i in range(iterations):
+
+        Q=numpy.linalg.lstsq(P,R)[0]
+        RT=R.T
+        QT=Q.T
+        P=numpy.linalg.lstsq(QT,RT)[0]
+        P=P.T
+        
+    return numpy.dot(P,Q)
+
+	

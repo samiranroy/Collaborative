@@ -1,0 +1,188 @@
+##Importing User Ratings and storing it in Ratings Dictionary
+import math
+
+Ratings_Dict={}
+for i in range(1,944):
+    Ratings_Dict[i]={}
+f=open("u1.base","r")
+Ratings=f.readlines()
+
+for i in range(len(Ratings)):
+    Ratings[i]=Ratings[i].split("\t")
+    for j in range(3):
+            Ratings[i][j]=int(Ratings[i][j])
+f.close()
+
+for i in Ratings:
+        Ratings_Dict[i[0]][i[1]]=i[2]
+
+##Importing Test Ratings and storing it in Test Dictionary
+        
+Test_Dict={}
+for i in range(1,944):
+    Test_Dict[i]={}
+f=open("u1.test","r")
+Ratings=f.readlines()
+
+for i in range(len(Ratings)):
+    Ratings[i]=Ratings[i].split("\t")
+    for j in range(3):
+            Ratings[i][j]=int(Ratings[i][j])
+f.close()
+
+for i in Ratings:
+        Test_Dict[i[0]][i[1]]=i[2]
+
+
+
+##Importing User Information and storing it in Users
+
+f=open("u.user","r")
+Users=f.readlines()
+
+for i in range(len(Users)):
+    Users[i]=Users[i].split("|")
+    
+f.close()
+
+
+User_Mean={}
+
+for i in Ratings_Dict.keys():
+    summ=0.0
+    for j in Ratings_Dict[i].keys():
+        summ=summ+Ratings_Dict[i][j]
+    User_Mean[i]=summ/len(Ratings_Dict[i].keys())
+        
+
+
+User_Std={}
+
+
+
+for i in Ratings_Dict.keys():
+    summ=0.0
+    for j in Ratings_Dict[i].keys():
+        summ=summ+((Ratings_Dict[i][j]-User_Mean[i])**2)
+    User_Std[i]=math.sqrt(summ/len(Ratings_Dict[i].keys()))
+ 
+    
+
+
+
+
+
+
+
+
+## PearsonDist returns the pearson distance and incorporated significance weighting between two users
+def PearsonDist(userA,userB):
+    set_intersection=set(Ratings_Dict[userA].keys()).intersection(set (Ratings_Dict[userB].keys()))
+    set_intersection=list(set_intersection)
+    n=len(set_intersection)    
+    sigmaxiyi=0.0
+    sigmaxi=0.0
+    sigmayi=0.0
+    sigmaxisquare=0.0
+    sigmayisquare=0.0
+
+    
+    for k in set_intersection:
+        sigmaxiyi=sigmaxiyi+(Ratings_Dict[userA][k]*Ratings_Dict[userB][k])
+        sigmaxi=sigmaxi+Ratings_Dict[userA][k]
+        sigmayi=sigmayi+Ratings_Dict[userB][k]
+        sigmaxisquare=sigmaxisquare+(Ratings_Dict[userA][k]**2)
+        sigmayisquare=sigmayisquare+(Ratings_Dict[userB][k]**2)
+
+    
+    
+     
+    try:
+        A=sigmaxiyi-((sigmaxi*sigmayi)/n)
+        B=math.sqrt(sigmaxisquare-((sigmaxi**2)/n))
+        C=math.sqrt(sigmayisquare-((sigmayi**2)/n))
+        return ((A/(B*C))*(n/50.0))
+        
+    except ZeroDivisionError:
+        return 0
+        
+
+
+# Calculating Pearson Similarities and Storing it in Pearson Distance Dictionary
+
+Pearson_Matrix={}
+for i in range(1,944):
+    Pearson_Matrix[i]={}
+    for j in range(1,944):
+        if i!=j:
+            Pearson_Matrix[i][j]=PearsonDist(i,j)
+
+
+
+# This function returns a list of k nearest users for input user
+
+def k_nearest(user,k):
+    kstack={}
+    for i in Pearson_Matrix[user].keys():
+        kstack[Pearson_Matrix[user][i]]=i
+    temp=kstack.keys()
+    temp.sort()
+    temp.reverse()
+    neighbors=[]
+    for i in range(0,k):
+        neighbors.append(kstack[temp[i]])
+    return neighbors
+
+
+# This stores the global mean of ratings for each user in a dictionary
+
+User_Mean={}
+
+for i in range(1,944):
+    rmean=0
+    for z in Ratings_Dict[i].keys():
+        rmean=rmean+Ratings_Dict[i][z]
+    User_Mean[i]=rmean/len(Ratings_Dict[i].keys())
+        
+
+
+
+
+# This function generates a recomendation to user for a given movie 
+# nearest neighbors, k=5, pearson similarity
+
+def recommender1(user,movie,k):
+    neighborhood=k_nearest(user,k)
+    numerator=0.0
+    denominator=0.0
+    
+    for x in neighborhood:
+        try:
+            numerator=numerator+(((Ratings_Dict[x][movie]-User_Mean[x])/User_Std[x])*Pearson_Matrix[user][x])
+            denominator=denominator+Pearson_Matrix[user][x]
+        except KeyError:
+            pass
+    try:
+        return (User_Mean[user]+(User_Std[user]*(numerator/denominator)))
+    except ZeroDivisionError:
+        return 0
+            
+       
+    
+            
+# Creating simple RECOMMENDER MATRIX and calculating MAE (pearson coefficient,10 neighbors, significanceweighting,normalization)
+
+increments=0
+MAE1=0.0
+for i in range(1,944):
+    for j in Test_Dict[i].keys():
+        actual_data=Test_Dict[i][j]
+        sample_data=recommender1(i,j,10)
+        if (sample_data!=0):
+            MAE1=MAE1+abs(sample_data-actual_data)
+            increments=increments+1
+print MAE1/increments
+          
+
+         
+# MAE (pearson coefficient,10 neighbors, using significanceweighting and normalization ) nikla 0.830433240551     

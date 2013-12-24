@@ -1,0 +1,65 @@
+##Importing User Ratings and storing it in Ratings Dictionary
+import math
+
+Ratings_Dict={}
+for i in range(1,944):
+    Ratings_Dict[i]={}
+f=open("u1.base","r")
+Ratings=f.readlines()
+
+for i in range(len(Ratings)):
+    Ratings[i]=Ratings[i].split("\t")
+    for j in range(3):
+            Ratings[i][j]=int(Ratings[i][j])
+f.close()
+
+for i in Ratings:
+        Ratings_Dict[i[0]][i[1]]=i[2]
+
+##Importing Test Ratings and storing it in Test Dictionary
+        
+Test_Dict={}
+for i in range(1,944):
+    Test_Dict[i]={}
+f=open("u1.test","r")
+Ratings=f.readlines()
+
+for i in range(len(Ratings)):
+    Ratings[i]=Ratings[i].split("\t")
+    for j in range(3):
+            Ratings[i][j]=int(Ratings[i][j])
+f.close()
+
+for i in Ratings:
+        Test_Dict[i[0]][i[1]]=i[2]
+
+
+
+
+
+
+
+User_Mean={}
+
+for i in Ratings_Dict.keys():
+    summ=0.0
+    for j in Ratings_Dict[i].keys():
+        summ=summ+Ratings_Dict[i][j]
+    User_Mean[i]=summ/len(Ratings_Dict[i].keys())
+
+
+
+
+# This stores the global mean of ratings for each user in a dictionary
+
+User_Mean={}
+
+for i in range(1,944):
+    rmean=0
+    for z in Ratings_Dict[i].keys():
+        rmean=rmean+Ratings_Dict[i][z]
+    User_Mean[i]=rmean/len(Ratings_Dict[i].keys())
+        
+
+
+
